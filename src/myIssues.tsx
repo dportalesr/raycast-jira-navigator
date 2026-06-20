@@ -23,7 +23,7 @@ import { fetchTransitions } from "./integration/jira";
 import { selectableTransitions, Transition } from "./transitions";
 import { formatDate } from "./util";
 import { openInBrowser } from "./openInBrowser";
-import { priorityAccessory, sectionColors, typeIcon } from "./presentation";
+import { priorityAccessory, sectionColors, statusIcon, typeIcon } from "./presentation";
 
 type HideActions = { hideIssue: (key: string) => void; hideProject: (project: string) => void };
 
@@ -341,12 +341,6 @@ function IssueListItem({ issue, tint, ctx }: { issue: Issue; tint: Color; ctx: I
   );
 }
 
-const categoryIcon = (category: string) => {
-  if (category === "Done") return { source: Icon.CheckCircle, tintColor: Color.Green };
-  if (category === "In Progress") return { source: Icon.Circle, tintColor: Color.Yellow };
-  return { source: Icon.Circle, tintColor: Color.Blue };
-};
-
 function ChangeStatusSubmenu({ issue, onPick }: { issue: Issue; onPick: (transition: Transition) => void }) {
   const [transitions, setTransitions] = useState<Transition[] | null>(null);
 
@@ -368,7 +362,7 @@ function ChangeStatusSubmenu({ issue, onPick }: { issue: Issue; onPick: (transit
         <Action
           key={transition.id}
           title={transition.name}
-          icon={categoryIcon(transition.to.category)}
+          icon={statusIcon(transition.to.status, transition.to.category)}
           onAction={() => onPick(transition)}
         />
       ))}
