@@ -1,0 +1,9 @@
+node_modules
+dist
+.DS_Store
+*.log
+raycast-env.d.ts
+
+# Stray curl cookie jars (e.g. `curl -c 160`) — may hold session tokens
+/160
+*.cookies
