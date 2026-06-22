@@ -156,6 +156,7 @@ export default function MyIssues(props: LaunchProps<{ launchContext?: { notice?:
   return (
     <List
       isLoading={isLoading}
+      filtering={{ keepSectionOrder: true }}
       searchText={searchText}
       onSearchTextChange={setSearchText}
       searchBarAccessory={
@@ -234,7 +235,7 @@ function IssueListItem({ issue, tint, ctx }: { issue: Issue; tint: Color; ctx: I
       icon={{ source: typeIcon(issue.type), tintColor: tint }}
       title={issue.key}
       subtitle={issue.summary}
-      keywords={[issue.key, issue.key.split("-")[1] ?? "", issue.status, issue.type].filter(Boolean)}
+      keywords={[issue.key, issue.key.split("-")[1] ?? "", issue.summary, issue.status, issue.type].filter(Boolean)}
       accessories={[
         ...(unread > 0 ? [{ icon: Icon.Bubble, text: `${unread}`, tooltip: `${unread} new comment(s)` }] : []),
         ...(isNew && unread === 0
