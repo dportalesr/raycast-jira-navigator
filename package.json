@@ -57,6 +57,14 @@
       "description": "Create one at id.atlassian.com/manage-profile/security/api-tokens"
     },
     {
+      "name": "fallbackProjectKey",
+      "type": "textfield",
+      "required": false,
+      "title": "Fallback Project Key",
+      "description": "Project key used by Open Issue when the clipboard or argument holds a number without a project prefix (e.g. 1234 opens PROD-1234). Leave empty to treat bare numbers as a search.",
+      "placeholder": "(Optional) e.g. PROD"
+    },
+    {
       "name": "epics",
       "type": "textfield",
       "required": false,

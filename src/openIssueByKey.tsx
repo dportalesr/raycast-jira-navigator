@@ -4,10 +4,10 @@ import { issueUrl } from "./integration/jira";
 import { resolveClipboardInput } from "./ticketInput";
 
 export default async function OpenIssueByKey(props: LaunchProps<{ arguments: { key?: string } }>) {
-  const { site } = getPreferenceValues<{ site: string }>();
+  const { site, fallbackProjectKey } = getPreferenceValues<{ site: string; fallbackProjectKey?: string }>();
 
   const raw = props.arguments?.key || (await Clipboard.readText()) || "";
-  const resolution = resolveClipboardInput(raw);
+  const resolution = resolveClipboardInput(raw, fallbackProjectKey);
 
   if (resolution.kind === "open") {
     await openInBrowser(issueUrl(site, resolution.key));
