@@ -1,7 +1,7 @@
 import { getPreferenceValues } from "@raycast/api";
 import { CommentMeta } from "../activity";
 import { RawTransition } from "../transitions";
-import { Issue } from "../types";
+import { CatalogueFilter, Issue } from "../types";
 
 type ConnectionPrefs = {
   site: string;
@@ -19,6 +19,7 @@ type JiraIssueRaw = {
     priority?: { name: string; iconUrl?: string } | null;
     project?: { key: string };
     status?: { name: string; statusCategory?: { name: string } };
+    statuscategorychangedate?: string;
     comment?: { total?: number };
   };
 };
@@ -29,7 +30,16 @@ type SearchResponse = {
   isLast?: boolean;
 };
 
-const FIELDS = ["summary", "status", "issuetype", "priority", "updated", "project", "comment"];
+const FIELDS = [
+  "summary",
+  "status",
+  "issuetype",
+  "priority",
+  "updated",
+  "project",
+  "comment",
+  "statuscategorychangedate",
+];
 
 /** Normalize a configured site into an absolute origin (no trailing slash). */
 export function siteBase(site: string): string {
@@ -102,6 +112,40 @@ export async function searchIssues(jql: string): Promise<Issue[]> {
   return issues;
 }
 
+type FilterSearchResponse = {
+  values?: { id?: unknown; name?: unknown; owner?: { displayName?: string } }[];
+  isLast?: boolean;
+};
+
+/**
+ * The full saved-filter catalogue visible to the account, for Manage Scopes.
+ * Paginated; capped at 20 pages (1000 filters) as a runaway guard. Jira
+ * returns pages ordered by name.
+ */
+export async function fetchAllFilters(): Promise<CatalogueFilter[]> {
+  const { base, headers } = connection();
+  const filters: CatalogueFilter[] = [];
+  let startAt = 0;
+
+  for (let page = 0; page < 20; page++) {
+    const params = new URLSearchParams({ expand: "owner", maxResults: "50", startAt: String(startAt) });
+    const response = await fetch(`${base}/rest/api/3/filter/search?${params.toString()}`, { headers });
+    if (!response.ok) throw new Error(`Jira ${response.status} listing filters`);
+
+    const data = (await response.json()) as FilterSearchResponse;
+    const values = data.values ?? [];
+    for (const value of values) {
+      if (value.id == null || value.name == null) continue;
+      filters.push({ id: String(value.id), name: String(value.name), owner: value.owner?.displayName });
+    }
+
+    if (data.isLast !== false || values.length === 0) break;
+    startAt += values.length;
+  }
+
+  return filters;
+}
+
 /** Available workflow transitions for an issue (with field metadata). */
 export async function fetchTransitions(key: string): Promise<RawTransition[]> {
   const { base, headers } = connection();
@@ -135,6 +179,7 @@ function normalize(raw: JiraIssueRaw, base: string): Issue {
     type: fields.issuetype?.name ?? "Task",
     status: fields.status?.name ?? "",
     statusCategory: fields.status?.statusCategory?.name ?? "",
+    statusCategoryChangedDate: fields.statuscategorychangedate,
     priority: fields.priority?.name ?? null,
     priorityIconUrl: fields.priority?.iconUrl,
     project: fields.project?.key ?? raw.key.split("-")[0],

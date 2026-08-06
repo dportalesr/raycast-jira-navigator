@@ -17,6 +17,7 @@ export type Issue = {
   type: string;
   status: string;
   statusCategory: StatusCategoryName;
+  statusCategoryChangedDate?: string;
   priority: string | null;
   priorityIconUrl?: string;
   project: string;
@@ -24,6 +25,24 @@ export type Issue = {
   commentTotal: number;
   flagged?: boolean;
 };
+
+/** A Jira saved filter, normalized to what the scope UI needs. */
+export type FilterSummary = {
+  id: string;
+  name: string;
+};
+
+/** A catalogue entry for Manage Scopes; owner disambiguates duplicate names. */
+export type CatalogueFilter = FilterSummary & {
+  owner?: string;
+};
+
+/**
+ * The scope backing the issue query: a selected saved filter (which owns all
+ * resolution — assignee, reporter, Done handling), or the assignee fallback
+ * (recent activity only) used while nothing is selected.
+ */
+export type Scope = { kind: "filter"; id: string | number } | { kind: "assignee" };
 
 /**
  * Declares one dashboard section and how an issue matches it. The first

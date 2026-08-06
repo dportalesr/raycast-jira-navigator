@@ -10,15 +10,18 @@ import {
   showToast,
   Toast,
 } from "@raycast/api";
-import { useEffect, useMemo, useState } from "react";
+import { ReactElement, useEffect, useMemo, useState } from "react";
+import ManageScopes from "./manageScopes";
+import useFilters from "./hooks/useFilters";
 import useIssues from "./hooks/useIssues";
 import useHiddenIssues from "./hooks/useHiddenIssues";
 import useSeenIssues from "./hooks/useSeenIssues";
 import useUnreadComments from "./hooks/useUnreadComments";
 import usePendingTransitions from "./hooks/usePendingTransitions";
 import { parseSections, partitionIssues } from "./sections";
+import { resolveDefaultScope } from "./scopes";
 import { sortIssues, SortMode } from "./sort";
-import { Issue, IssueSection } from "./types";
+import { Issue, IssueSection, Scope } from "./types";
 import { fetchTransitions } from "./integration/jira";
 import { selectableTransitions, Transition } from "./transitions";
 import { formatDate } from "./util";
@@ -37,12 +40,21 @@ type ItemCtx = {
   nextSortLabel: string;
   hideActions: HideActions;
   reload: () => void;
+  manageScopesView: ReactElement;
 };
 
 const transitionDelayMs = (pref?: string) => {
   const seconds = parseInt(pref ?? "5", 10);
   return (Number.isFinite(seconds) && seconds >= 0 ? seconds : 5) * 1000;
 };
+
+const doneWindowDays = (pref?: string) => {
+  const days = parseInt(pref || "3", 10);
+  return Number.isFinite(days) && days >= 0 ? days : 3;
+};
+
+/** Dropdown value for the assignee fallback, offered only when discovery returns nothing. */
+const ASSIGNEE_SCOPE = "assignee";
 
 const SORT_LABEL: Record<SortMode, string> = {
   triage: "Triage",
@@ -56,18 +68,36 @@ const SORT_ORDER: SortMode[] = ["triage", "updated", "priority", "key"];
 const isAuthError = (err: Error) => /\b(401|403)\b|unauthorized|forbidden|authentication/i.test(err.message);
 
 export default function MyIssues(props: LaunchProps<{ launchContext?: { notice?: string; searchText?: string } }>) {
-  const { isLoading: isIssuesLoading, issues, error, reload } = useIssues();
-  const { isLoading: isHiddenLoading, isHiddenIssue, isHiddenProject, hideIssue, hideProject } = useHiddenIssues();
-  const seen = useSeenIssues();
-  const { sectionConfig, transitionDelaySeconds } = getPreferenceValues<{
+  const { sectionConfig, transitionDelaySeconds, recentlyDoneDays } = getPreferenceValues<{
     sectionConfig?: string;
     transitionDelaySeconds?: string;
+    recentlyDoneDays?: string;
   }>();
+  const doneDays = doneWindowDays(recentlyDoneDays);
+
+  const filters = useFilters();
+  const [selectedScopeId, setSelectedScopeId] = useState<string | undefined>();
+
+  // Resolves once the selection loads AND the dropdown reports its (restored)
+  // pick, so the first fetch already targets the remembered scope.
+  const scope: Scope | undefined = useMemo(() => {
+    if (filters.isLoading || selectedScopeId === undefined) return undefined;
+    const resolved = resolveDefaultScope(selectedScopeId, filters.scopes);
+    return resolved ? { kind: "filter", id: resolved.id } : { kind: "assignee" };
+  }, [filters.isLoading, filters.scopes, selectedScopeId]);
+
+  const { isLoading: isIssuesLoading, issues, error, reload } = useIssues(scope);
+  const { isLoading: isHiddenLoading, isHiddenIssue, isHiddenProject, hideIssue, hideProject } = useHiddenIssues();
+  const seen = useSeenIssues();
   const pending = usePendingTransitions({ delayMs: transitionDelayMs(transitionDelaySeconds), reload });
   const [sortMode, setSortMode] = useState<SortMode>("triage");
   const [searchText, setSearchText] = useState(props.launchContext?.searchText ?? "");
 
   const isLoading = isIssuesLoading || isHiddenLoading || seen.isLoading;
+
+  const manageScopesView = (
+    <ManageScopes selection={filters.scopes} onToggle={filters.toggle} onSync={filters.applySync} />
+  );
 
   const notice = props.launchContext?.notice;
   useEffect(() => {
@@ -109,8 +139,8 @@ export default function MyIssues(props: LaunchProps<{ launchContext?: { notice?:
   );
 
   const sections = useMemo(
-    () => partitionIssues(visibleIssues, parseSections(sectionConfig)),
-    [visibleIssues, sectionConfig]
+    () => partitionIssues(visibleIssues, parseSections(sectionConfig), { recentlyDoneDays: doneDays, now: Date.now() }),
+    [visibleIssues, sectionConfig, doneDays]
   );
 
   // Section color per issue, so the flat sort views can still hint status.
@@ -149,6 +179,7 @@ export default function MyIssues(props: LaunchProps<{ launchContext?: { notice?:
     nextSortLabel: SORT_LABEL[nextSortMode],
     hideActions: { hideIssue, hideProject },
     reload,
+    manageScopesView,
   };
 
   const flatIssues = sortMode === "triage" ? [] : sortIssues(visibleIssues, sortMode);
@@ -160,11 +191,13 @@ export default function MyIssues(props: LaunchProps<{ launchContext?: { notice?:
       searchText={searchText}
       onSearchTextChange={setSearchText}
       searchBarAccessory={
-        <List.Dropdown tooltip="Sort" value={sortMode} onChange={v => setSortMode(v as SortMode)} storeValue>
-          <List.Dropdown.Item title="Triage" value="triage" icon={Icon.Layers} />
-          <List.Dropdown.Item title="Last Updated" value="updated" icon={Icon.Clock} />
-          <List.Dropdown.Item title="Priority" value="priority" icon={Icon.BarChart} />
-          <List.Dropdown.Item title="Issue Key" value="key" icon={Icon.Hashtag} />
+        <List.Dropdown tooltip="Scope" onChange={setSelectedScopeId} storeValue>
+          {filters.scopes.map(filter => (
+            <List.Dropdown.Item key={filter.id} title={filter.name} value={filter.id} icon={Icon.Filter} />
+          ))}
+          {!filters.isLoading && filters.scopes.length === 0 && (
+            <List.Dropdown.Item title="Recent Activity (Assignee)" value={ASSIGNEE_SCOPE} icon={Icon.Person} />
+          )}
         </List.Dropdown>
       }
     >
@@ -183,10 +216,11 @@ export default function MyIssues(props: LaunchProps<{ launchContext?: { notice?:
       ) : showEmptyView ? (
         <List.EmptyView
           icon={{ source: Icon.MagnifyingGlass, tintColor: Color.SecondaryText }}
-          title="No issues assigned to you"
-          description="The connection worked but returned zero issues. Check that the API token belongs to the account that has these issues, and that the email matches it."
+          title="No issues in this scope"
+          description="The connection worked but the scope returned zero issues. Switch scope, pick saved filters with Manage Scopes (⌘⇧F), or check the API token account."
           actions={
             <ActionPanel>
+              <Action.Push title="Manage Scopes" icon={Icon.Filter} target={manageScopesView} />
               <Action title="Reload" icon={Icon.RotateClockwise} onAction={() => reload()} />
               <Action title="Open Extension Preferences" icon={Icon.Gear} onAction={() => openExtensionPreferences()} />
             </ActionPanel>
@@ -328,6 +362,12 @@ function IssueListItem({ issue, tint, ctx }: { issue: Issue; tint: Color; ctx: I
               icon={Icon.RotateClockwise}
               shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
               onAction={() => ctx.reload()}
+            />
+            <Action.Push
+              title="Manage Scopes"
+              icon={Icon.Filter}
+              shortcut={{ modifiers: ["cmd", "shift"], key: "f" }}
+              target={ctx.manageScopesView}
             />
             <Action
               title="Open Extension Preferences"

@@ -71,6 +71,39 @@ describe("partitionIssues (defaults)", () => {
   });
 });
 
+describe("partitionIssues — RECENTLY DONE window (date-aware)", () => {
+  const now = Date.parse("2026-07-16T00:00:00.000Z");
+  const daysAgo = (n: number) => new Date(now - n * 86400000).toISOString();
+
+  it("keeps a Done issue changed within the window", () => {
+    const sections = partitionIssues(
+      [issue({ status: "Done", statusCategory: "Done", statusCategoryChangedDate: daysAgo(1) })],
+      defaultSections,
+      { recentlyDoneDays: 3, now }
+    );
+    expect(sectionFor(sections, "RECENTLY DONE")?.issues).toHaveLength(1);
+  });
+
+  it("drops a Done issue changed before the window", () => {
+    const sections = partitionIssues(
+      [issue({ status: "Done", statusCategory: "Done", statusCategoryChangedDate: daysAgo(10) })],
+      defaultSections,
+      { recentlyDoneDays: 3, now }
+    );
+    expect(sectionFor(sections, "RECENTLY DONE")?.issues).toHaveLength(0);
+    expect(sections.reduce((n, s) => n + s.issues.length, 0)).toBe(0);
+  });
+
+  it("hides all Done when the window is zero", () => {
+    const sections = partitionIssues(
+      [issue({ status: "Done", statusCategory: "Done", statusCategoryChangedDate: daysAgo(1) })],
+      defaultSections,
+      { recentlyDoneDays: 0, now }
+    );
+    expect(sectionFor(sections, "RECENTLY DONE")?.issues).toHaveLength(0);
+  });
+});
+
 describe("parseSections", () => {
   it("returns defaults for empty input", () => {
     expect(parseSections(undefined)).toBe(defaultSections);

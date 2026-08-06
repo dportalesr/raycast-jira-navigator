@@ -1,34 +1,25 @@
-import { getPreferenceValues } from "@raycast/api";
 import { useCallback, useEffect, useState } from "react";
-import { Issue } from "../types";
-import { buildScopeJql, parseEpicKeys } from "../jql";
+import { Issue, Scope } from "../types";
+import { buildScopeJql } from "../jql";
 import { searchIssues } from "../integration/jira";
 
-type ScopePrefs = {
-  epics?: string;
-  extraJql?: string;
-  recentlyDoneDays?: string;
-};
-
-const useIssues = () => {
-  const { epics, extraJql, recentlyDoneDays } = getPreferenceValues<ScopePrefs>();
-
+/**
+ * Issues for the selected scope. Holds off fetching until a scope resolves
+ * (filter discovery may still be in flight); reloads on scope change.
+ */
+const useIssues = (scope?: Scope) => {
   const [isLoading, setIsLoading] = useState(true);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [error, setError] = useState<Error | null>(null);
 
+  const scopeKey = scope ? JSON.stringify(scope) : undefined;
+
   const reload = useCallback(() => {
+    if (!scope) return;
     setIsLoading(true);
     setError(null);
 
-    const days = parseInt(recentlyDoneDays || "3", 10);
-    const jql = buildScopeJql({
-      recentlyDoneDays: Number.isFinite(days) ? days : 3,
-      epics: parseEpicKeys(epics),
-      extraJql,
-    });
-
-    return searchIssues(jql)
+    return searchIssues(buildScopeJql(scope))
       .then(setIssues)
       .catch((err: unknown) => {
         const wrapped = err instanceof Error ? err : new Error(String(err));
@@ -36,7 +27,7 @@ const useIssues = () => {
         setError(wrapped);
       })
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [scopeKey]);
 
   useEffect(() => {
     reload();

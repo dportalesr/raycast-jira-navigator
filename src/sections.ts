@@ -15,9 +15,23 @@ export const defaultSections: SectionConfig[] = [
   { title: "RECENTLY DONE", color: "purple", recentDone: true },
 ];
 
-function matches(issue: Issue, config: SectionConfig): boolean {
+/** Client-side RECENTLY DONE window; `now` injectable for deterministic tests. */
+export type PartitionOptions = {
+  recentlyDoneDays: number;
+  now: number;
+};
+
+function isRecentlyDone(issue: Issue, opts?: PartitionOptions): boolean {
+  if (issue.statusCategory !== "Done") return false;
+  if (!opts) return true;
+  if (opts.recentlyDoneDays <= 0) return false;
+  if (!issue.statusCategoryChangedDate) return true;
+  return Date.parse(issue.statusCategoryChangedDate) >= opts.now - opts.recentlyDoneDays * 86400000;
+}
+
+function matches(issue: Issue, config: SectionConfig, opts?: PartitionOptions): boolean {
   if (config.flagged) return issue.flagged === true;
-  if (config.recentDone) return issue.statusCategory === "Done";
+  if (config.recentDone) return isRecentlyDone(issue, opts);
   if (config.statuses?.length) {
     return config.statuses.some(s => s.toLowerCase() === issue.status.toLowerCase());
   }
@@ -28,13 +42,19 @@ function matches(issue: Issue, config: SectionConfig): boolean {
 /**
  * Group issues into sections. Each issue joins the first section it matches;
  * unmatched issues are dropped. Empty sections are kept so the view can decide
- * to hide them.
+ * to hide them. With `opts`, the `recentDone` matcher keeps only Done issues
+ * changed within the window, so out-of-window Done issues (fetched under
+ * filter scopes with no query-level Done restriction) fall out of triage.
  */
-export function partitionIssues(issues: Issue[], sections: SectionConfig[] = defaultSections): IssueSection[] {
+export function partitionIssues(
+  issues: Issue[],
+  sections: SectionConfig[] = defaultSections,
+  opts?: PartitionOptions
+): IssueSection[] {
   const result: IssueSection[] = sections.map(config => ({ config, issues: [] }));
 
   for (const issue of issues) {
-    const index = sections.findIndex(config => matches(issue, config));
+    const index = sections.findIndex(config => matches(issue, config, opts));
     if (index >= 0) result[index].issues.push(issue);
   }
 

@@ -12,9 +12,9 @@
   "commands": [
     {
       "name": "myIssues",
-      "title": "My Issues",
+      "title": "Issues",
       "subtitle": "Jira",
-      "description": "Your assigned Jira issues grouped by actionable status",
+      "description": "Your Jira issues grouped by actionable status, scoped by your saved filters",
       "mode": "view"
     },
     {
@@ -65,27 +65,11 @@
       "placeholder": "(Optional) e.g. PROD"
     },
     {
-      "name": "epics",
-      "type": "textfield",
-      "required": false,
-      "title": "Epics",
-      "description": "Optional comma-separated epic keys to scope to (parent in (...)), ANDed with the assignee scope. Useful on a shared account to isolate your own work. Leave empty to scope by assignee only.",
-      "placeholder": "(Optional) e.g. PROD-5225, PROD-5218"
-    },
-    {
-      "name": "extraJql",
-      "type": "textfield",
-      "required": false,
-      "title": "Extra JQL",
-      "description": "Optional JQL appended to the scope with AND (e.g. project = PROD).",
-      "placeholder": "(Optional) e.g. project = PROD"
-    },
-    {
       "name": "recentlyDoneDays",
       "type": "textfield",
       "required": false,
       "title": "Recently Done Threshold (days)",
-      "description": "Show issues moved to Done within the last N days. Set to 0 to hide.",
+      "description": "Keep RECENTLY DONE to issues moved to Done within the last N days. Set to 0 to hide Done from triage.",
       "default": "3",
       "placeholder": "3"
     },
@@ -114,13 +98,34 @@
       "description": "Which browser to open issues in. Tab reuse is supported for Chromium browsers and Safari; other browsers open a new tab.",
       "default": "default",
       "data": [
-        { "title": "System Default", "value": "default" },
-        { "title": "Google Chrome", "value": "Google Chrome" },
-        { "title": "Brave Browser", "value": "Brave Browser" },
-        { "title": "Microsoft Edge", "value": "Microsoft Edge" },
-        { "title": "Safari", "value": "Safari" },
-        { "title": "Arc", "value": "Arc" },
-        { "title": "Firefox", "value": "Firefox" }
+        {
+          "title": "System Default",
+          "value": "default"
+        },
+        {
+          "title": "Google Chrome",
+          "value": "Google Chrome"
+        },
+        {
+          "title": "Brave Browser",
+          "value": "Brave Browser"
+        },
+        {
+          "title": "Microsoft Edge",
+          "value": "Microsoft Edge"
+        },
+        {
+          "title": "Safari",
+          "value": "Safari"
+        },
+        {
+          "title": "Arc",
+          "value": "Arc"
+        },
+        {
+          "title": "Firefox",
+          "value": "Firefox"
+        }
       ]
     },
     {
@@ -149,7 +154,7 @@
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.0",
-    "@types/react": "^19.0.10",
+    "@types/react": "19.0.10",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "eslint": "^8.57.0",

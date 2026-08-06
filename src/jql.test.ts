@@ -1,61 +1,34 @@
-import { buildScopeJql, parseEpicKeys } from "./jql";
+import { buildScopeJql } from "./jql";
 
-describe("buildScopeJql", () => {
-  it("always scopes to the current user", () => {
-    expect(buildScopeJql({ recentlyDoneDays: 3 })).toContain("assignee = currentUser()");
+describe("buildScopeJql — filter scope", () => {
+  it("references the saved filter by id", () => {
+    expect(buildScopeJql({ kind: "filter", id: 123 })).toContain("filter = 123");
   });
 
-  it("scopes to the given epics with parent in (...), kept alongside the assignee clause", () => {
-    const jql = buildScopeJql({ recentlyDoneDays: 3, epics: ["PROD-5225", "PROD-5218"] });
-    expect(jql).toContain("assignee = currentUser()");
-    expect(jql).toContain("parent in (PROD-5225, PROD-5218)");
-  });
-
-  it("omits the epic clause when no epics are given", () => {
-    expect(buildScopeJql({ recentlyDoneDays: 3 })).not.toContain("parent in");
-  });
-
-  it("omits the epic clause for an empty epic list", () => {
-    expect(buildScopeJql({ recentlyDoneDays: 3, epics: [] })).not.toContain("parent in");
-  });
-
-  it("includes done issues changed within the recent window", () => {
-    const jql = buildScopeJql({ recentlyDoneDays: 5 });
-    expect(jql).toContain("statusCategory != Done OR statusCategoryChangedDate >= -5d");
-  });
-
-  it("excludes done entirely when the window is zero", () => {
-    const jql = buildScopeJql({ recentlyDoneDays: 0 });
-    expect(jql).toContain("statusCategory != Done");
-    expect(jql).not.toContain("statusCategoryChangedDate");
-  });
-
-  it("appends extra JQL with AND, wrapped in parentheses", () => {
-    const jql = buildScopeJql({ recentlyDoneDays: 3, extraJql: "project = PROD" });
-    expect(jql).toContain("AND (project = PROD)");
-  });
-
-  it("ignores blank extra JQL", () => {
-    const jql = buildScopeJql({ recentlyDoneDays: 3, extraJql: "   " });
-    expect(jql).not.toContain("AND ()");
+  it("does not append an assignee or Done clause (the filter owns resolution)", () => {
+    const jql = buildScopeJql({ kind: "filter", id: 123 });
+    expect(jql).not.toContain("assignee = currentUser()");
+    expect(jql).not.toContain("statusCategory");
   });
 
   it("orders by priority then recency", () => {
-    expect(buildScopeJql({ recentlyDoneDays: 3 })).toMatch(/ORDER BY priority DESC, updated DESC$/);
+    expect(buildScopeJql({ kind: "filter", id: 123 })).toMatch(/ORDER BY priority DESC, updated DESC$/);
+  });
+
+  it("accepts a string id", () => {
+    expect(buildScopeJql({ kind: "filter", id: "10042" })).toContain("filter = 10042");
   });
 });
 
-describe("parseEpicKeys", () => {
-  it("splits a comma-separated list into trimmed keys", () => {
-    expect(parseEpicKeys("PROD-5225, PROD-5218")).toEqual(["PROD-5225", "PROD-5218"]);
+describe("buildScopeJql — assignee fallback", () => {
+  it("scopes to the current user's recent activity, without a Done clause", () => {
+    const jql = buildScopeJql({ kind: "assignee" });
+    expect(jql).toContain("assignee = currentUser()");
+    expect(jql).toContain("updated >= -48h");
+    expect(jql).not.toContain("statusCategory");
   });
 
-  it("tolerates extra whitespace and trailing commas", () => {
-    expect(parseEpicKeys("  PROD-5225 ,, PROD-5218 , ")).toEqual(["PROD-5225", "PROD-5218"]);
-  });
-
-  it("returns an empty array for blank or missing input", () => {
-    expect(parseEpicKeys("   ")).toEqual([]);
-    expect(parseEpicKeys(undefined)).toEqual([]);
+  it("orders by recency", () => {
+    expect(buildScopeJql({ kind: "assignee" })).toMatch(/ORDER BY updated DESC$/);
   });
 });

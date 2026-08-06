@@ -8,9 +8,12 @@ sections instead of hardcoded states, because Jira workflows vary per team.
 
 ## Commands
 
-- **My Issues** — your assigned issues, grouped into triage sections.
+- **Issues** — your issues, grouped into triage sections. The scope dropdown
+  lists the Jira **saved filters** you selected via Manage Scopes (`⌘⇧F`);
+  each filter owns its own JQL, so new scopes are created in Jira, not in the
+  extension. With nothing selected, a recent-activity assignee scope is used.
 - **Open Issue** — open any issue by its key from the argument or clipboard; any
-  other text (a number, a phrase) opens My Issues pre-filtered by that term.
+  other text (a number, a phrase) opens Issues pre-filtered by that term.
 
 ## Default sections
 
@@ -42,12 +45,25 @@ new or unknown in-progress status still surfaces.
 | Jira Site             | Atlassian Cloud host, without protocol                        |
 | Account Email         | Atlassian account email for the API token                     |
 | API Token             | Atlassian API token                                           |
-| Epics                 | Comma-separated epic keys to scope to (e.g. `PROD-1, PROD-2`) |
-| Extra JQL             | Optional JQL AND-appended to the scope (e.g. `project = PROD`)|
 | Recently Done (days)  | Show issues completed within N days (default 3, 0 to hide)    |
 | Status Change Delay   | Undo window before a status change reaches Jira (default 5)   |
 | Section Config        | Optional JSON array overriding the default sections           |
 | Browser / Tab Reuse   | Which browser to open issues in; reuse an existing tab        |
+
+## Scopes
+
+Scopes are Jira saved filters. **Manage Scopes** (`⌘⇧F`) browses every saved
+filter visible to the account — yours, shared, any name — and Enter toggles
+which appear in the scope dropdown. The selection is stored locally, so each
+teammate on a shared account curates their own. Opening Manage Scopes also
+syncs it: filters renamed in Jira update, deleted ones drop.
+
+Jira's built-in filters ("My open issues", "Reported by me", …) are not saved
+filters and cannot be referenced by the API; use "Save as" in Jira once, then
+select the copy. A selected filter's JQL fully defines the scope; RECENTLY
+DONE is windowed client-side, so long-done issues fetched by a filter stay
+reachable in the flat sort views (`⌘S`). With nothing selected, the fallback
+scope shows your last 48h of assigned activity, newest first.
 
 ## Changing status
 
