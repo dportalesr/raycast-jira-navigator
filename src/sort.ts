@@ -1,17 +1,21 @@
 import { Issue } from "./types";
 
-export type SortMode = "triage" | "updated" | "priority" | "key";
+export type SortMode = "triage" | "updated" | "priority" | "created";
+
+export const DEFAULT_SORT_MODE: SortMode = "updated";
+
+const SORT_MODES: SortMode[] = ["triage", "updated", "priority", "created"];
+
+/** Read a persisted sort mode, falling back to the default for a missing or stale value. */
+export function parseSortMode(raw: string | undefined): SortMode {
+  return SORT_MODES.includes(raw as SortMode) ? (raw as SortMode) : DEFAULT_SORT_MODE;
+}
 
 const PRIORITY_RANK: Record<string, number> = { highest: 1, high: 2, medium: 3, low: 4, lowest: 5 };
 
 function priorityRank(issue: Issue): number {
   if (!issue.priority) return 100; // unset priorities sort last
   return PRIORITY_RANK[issue.priority.toLowerCase()] ?? 99;
-}
-
-function issueNumber(issue: Issue): number {
-  const n = parseInt(issue.key.split("-")[1] ?? "", 10);
-  return Number.isNaN(n) ? 0 : n;
 }
 
 const byRecency = (a: Issue, b: Issue) => Date.parse(b.updated) - Date.parse(a.updated);
@@ -28,8 +32,8 @@ export function sortIssues(issues: Issue[], mode: SortMode): Issue[] {
       return list.sort(byRecency);
     case "priority":
       return list.sort((a, b) => priorityRank(a) - priorityRank(b) || byRecency(a, b));
-    case "key":
-      return list.sort((a, b) => issueNumber(b) - issueNumber(a));
+    case "created":
+      return list.sort((a, b) => Date.parse(b.created) - Date.parse(a.created));
     case "triage":
     default:
       return list;

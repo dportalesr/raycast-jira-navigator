@@ -11,6 +11,7 @@ const issue = (overrides: Partial<Issue>): Issue => ({
   statusCategory: "To Do",
   priority: "Medium",
   project: "PROD",
+  created: "2026-06-01T00:00:00.000Z",
   updated: "2026-06-18T00:00:00.000Z",
   commentTotal: 0,
   ...overrides,
@@ -41,6 +42,13 @@ describe("partitionIssues (defaults)", () => {
   it("routes To Do category issues to TO DO", () => {
     const sections = partitionIssues([issue({ status: "To Do", statusCategory: "To Do" })]);
     expect(sectionFor(sections, "TO DO")?.issues).toHaveLength(1);
+  });
+
+  it("lists oldest-created issues first within a section", () => {
+    const newer = issue({ id: "1", key: "PROD-2", created: "2026-06-10T00:00:00.000Z" });
+    const older = issue({ id: "2", key: "PROD-1", created: "2026-06-01T00:00:00.000Z" });
+    const sections = partitionIssues([newer, older]);
+    expect(sectionFor(sections, "TO DO")?.issues.map(i => i.key)).toEqual(["PROD-1", "PROD-2"]);
   });
 
   it("routes Done issues to RECENTLY DONE", () => {

@@ -18,6 +18,7 @@ import useHiddenIssues from "./hooks/useHiddenIssues";
 import useSeenIssues from "./hooks/useSeenIssues";
 import useUnreadComments from "./hooks/useUnreadComments";
 import usePendingTransitions from "./hooks/usePendingTransitions";
+import useSortMode from "./hooks/useSortMode";
 import { parseSections, partitionIssues } from "./sections";
 import { resolveDefaultScope } from "./scopes";
 import { sortIssues, SortMode } from "./sort";
@@ -33,6 +34,7 @@ type HideActions = { hideIssue: (key: string) => void; hideProject: (project: st
 type ItemCtx = {
   isNew: (issue: Issue) => boolean;
   unread: (issue: Issue) => number;
+  dateFor: (issue: Issue) => string;
   markSeen: (issue: Issue) => void;
   markAllSeen: () => void;
   changeStatus: (issue: Issue, transition: Transition) => void;
@@ -60,10 +62,10 @@ const SORT_LABEL: Record<SortMode, string> = {
   triage: "Triage",
   updated: "Last Updated",
   priority: "Priority",
-  key: "Issue Key",
+  created: "Creation Date",
 };
 
-const SORT_ORDER: SortMode[] = ["triage", "updated", "priority", "key"];
+const SORT_ORDER: SortMode[] = ["updated", "triage", "created", "priority"];
 
 const isAuthError = (err: Error) => /\b(401|403)\b|unauthorized|forbidden|authentication/i.test(err.message);
 
@@ -90,10 +92,10 @@ export default function MyIssues(props: LaunchProps<{ launchContext?: { notice?:
   const { isLoading: isHiddenLoading, isHiddenIssue, isHiddenProject, hideIssue, hideProject } = useHiddenIssues();
   const seen = useSeenIssues();
   const pending = usePendingTransitions({ delayMs: transitionDelayMs(transitionDelaySeconds), reload });
-  const [sortMode, setSortMode] = useState<SortMode>("triage");
+  const { sortMode, setSortMode, isLoading: isSortLoading } = useSortMode();
   const [searchText, setSearchText] = useState(props.launchContext?.searchText ?? "");
 
-  const isLoading = isIssuesLoading || isHiddenLoading || seen.isLoading;
+  const isLoading = isIssuesLoading || isHiddenLoading || seen.isLoading || isSortLoading;
 
   const manageScopesView = (
     <ManageScopes selection={filters.scopes} onToggle={filters.toggle} onSync={filters.applySync} />
@@ -166,9 +168,13 @@ export default function MyIssues(props: LaunchProps<{ launchContext?: { notice?:
 
   const nextSortMode = SORT_ORDER[(SORT_ORDER.indexOf(sortMode) + 1) % SORT_ORDER.length];
 
+  // The date accessory shows the date the active view sorts by.
+  const sortsByCreation = sortMode === "triage" || sortMode === "created";
+
   const ctx: ItemCtx = {
     isNew: seen.isNew,
     unread: (issue: Issue) => unreadByKey[issue.key] ?? 0,
+    dateFor: (issue: Issue) => formatDate(sortsByCreation ? issue.created : issue.updated),
     markSeen: seen.markSeen,
     markAllSeen: () => seen.markAllSeen(visibleIssues),
     changeStatus: (issue, transition) => {
@@ -275,7 +281,7 @@ function IssueListItem({ issue, tint, ctx }: { issue: Issue; tint: Color; ctx: I
         ...(isNew && unread === 0
           ? [{ icon: { source: Icon.Dot, tintColor: Color.Blue }, tooltip: "New activity" }]
           : []),
-        { text: formatDate(issue.updated) },
+        { text: ctx.dateFor(issue) },
         ...(priority ? [priority] : []),
       ]}
       actions={

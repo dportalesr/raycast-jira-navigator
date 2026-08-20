@@ -41,8 +41,9 @@ function matches(issue: Issue, config: SectionConfig, opts?: PartitionOptions): 
 
 /**
  * Group issues into sections. Each issue joins the first section it matches;
- * unmatched issues are dropped. Empty sections are kept so the view can decide
- * to hide them. With `opts`, the `recentDone` matcher keeps only Done issues
+ * unmatched issues are dropped. Sections list oldest-created issues first, so
+ * the longest-waiting ones surface at the top. Empty sections are kept so the
+ * view can decide to hide them. With `opts`, the `recentDone` matcher keeps only Done issues
  * changed within the window, so out-of-window Done issues (fetched under
  * filter scopes with no query-level Done restriction) fall out of triage.
  */
@@ -56,6 +57,10 @@ export function partitionIssues(
   for (const issue of issues) {
     const index = sections.findIndex(config => matches(issue, config, opts));
     if (index >= 0) result[index].issues.push(issue);
+  }
+
+  for (const section of result) {
+    section.issues.sort((a, b) => Date.parse(a.created) - Date.parse(b.created));
   }
 
   return result;

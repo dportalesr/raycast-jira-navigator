@@ -27,10 +27,15 @@ One list, grouped by what each ticket needs from you, most urgent first:
 - **RECENTLY DONE** - completed within the last N days (configurable).
 
 The named sections come before the category catch-alls, so a new or unknown
-in-progress status still surfaces. Empty sections are hidden. `⌘S` cycles the
-grouping into flat sorts (Last Updated, Priority, Issue Key) that keep each
-ticket tinted with its section color; typing filters by key, number, summary,
-status, or type.
+in-progress status still surfaces. Empty sections are hidden. The list opens as
+a flat **Last Updated** sort; `⌘S` cycles on to the sectioned grouping, then
+Creation Date and Priority, and the mode you leave it on is remembered for the
+next launch. Within the sectioned grouping, tickets read oldest-created first,
+so the longest-waiting ones surface at the top. The date accessory shows the
+date the active view sorts by: creation date in the sectioned grouping and
+Creation Date views, last update elsewhere. The flat sorts keep each ticket
+tinted with its section color; typing filters by key, number, summary, status,
+or type.
 
 ### Scopes
 

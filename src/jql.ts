@@ -12,6 +12,6 @@ import { Scope } from "./types";
  * team backlog on a shared account.
  */
 export function buildScopeJql(scope: Scope): string {
-  if (scope.kind === "filter") return `filter = ${scope.id} ORDER BY priority DESC, updated DESC`;
+  if (scope.kind === "filter") return `filter = ${scope.id} ORDER BY updated DESC`;
   return "assignee = currentUser() AND updated >= -48h ORDER BY updated DESC";
 }

@@ -21,6 +21,7 @@ export type Issue = {
   priority: string | null;
   priorityIconUrl?: string;
   project: string;
+  created: string;
   updated: string;
   commentTotal: number;
   flagged?: boolean;

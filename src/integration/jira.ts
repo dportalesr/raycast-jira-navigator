@@ -14,6 +14,7 @@ type JiraIssueRaw = {
   key: string;
   fields: {
     summary?: string;
+    created: string;
     updated: string;
     issuetype?: { name: string };
     priority?: { name: string; iconUrl?: string } | null;
@@ -35,6 +36,7 @@ const FIELDS = [
   "status",
   "issuetype",
   "priority",
+  "created",
   "updated",
   "project",
   "comment",
@@ -183,6 +185,7 @@ function normalize(raw: JiraIssueRaw, base: string): Issue {
     priority: fields.priority?.name ?? null,
     priorityIconUrl: fields.priority?.iconUrl,
     project: fields.project?.key ?? raw.key.split("-")[0],
+    created: fields.created,
     updated: fields.updated,
     commentTotal: fields.comment?.total ?? 0,
   };

@@ -11,8 +11,8 @@ describe("buildScopeJql — filter scope", () => {
     expect(jql).not.toContain("statusCategory");
   });
 
-  it("orders by priority then recency", () => {
-    expect(buildScopeJql({ kind: "filter", id: 123 })).toMatch(/ORDER BY priority DESC, updated DESC$/);
+  it("orders by recency so triage sections read newest first", () => {
+    expect(buildScopeJql({ kind: "filter", id: 123 })).toMatch(/ORDER BY updated DESC$/);
   });
 
   it("accepts a string id", () => {

@@ -1,5 +1,5 @@
 import { Issue } from "./types";
-import { SortMode, sortIssues } from "./sort";
+import { parseSortMode, SortMode, sortIssues } from "./sort";
 
 const issue = (overrides: Partial<Issue>): Issue => ({
   id: "1",
@@ -11,6 +11,7 @@ const issue = (overrides: Partial<Issue>): Issue => ({
   statusCategory: "To Do",
   priority: "Medium",
   project: "PROD",
+  created: "2026-06-01T00:00:00.000Z",
   updated: "2026-06-18T00:00:00.000Z",
   commentTotal: 0,
   ...overrides,
@@ -48,11 +49,10 @@ describe("sortIssues", () => {
     expect(sortIssues([a, b], "priority").map(i => i.key)).toEqual(["PROD-2", "PROD-1"]);
   });
 
-  it("key sorts by issue number, highest first", () => {
-    const a = issue({ key: "PROD-9" });
-    const b = issue({ key: "PROD-100" });
-    const c = issue({ key: "PROD-21" });
-    expect(sortIssues([a, b, c], "key").map(i => i.key)).toEqual(["PROD-100", "PROD-21", "PROD-9"]);
+  it("created sorts newest first", () => {
+    const older = issue({ key: "PROD-1", created: "2026-06-01T00:00:00.000Z" });
+    const newer = issue({ key: "PROD-2", created: "2026-06-15T00:00:00.000Z" });
+    expect(sortIssues([older, newer], "created").map(i => i.key)).toEqual(["PROD-2", "PROD-1"]);
   });
 
   it("does not mutate the input array", () => {
@@ -60,5 +60,20 @@ describe("sortIssues", () => {
     const copy = [...input];
     sortIssues(input, "updated");
     expect(input).toEqual(copy);
+  });
+});
+
+describe("parseSortMode", () => {
+  it("accepts every known mode", () => {
+    const modes: SortMode[] = ["triage", "updated", "priority", "created"];
+    for (const mode of modes) expect(parseSortMode(mode)).toBe(mode);
+  });
+
+  it("falls back to updated for a stale stored value (e.g. the removed key mode)", () => {
+    expect(parseSortMode("key")).toBe("updated");
+  });
+
+  it("falls back to updated when nothing is stored", () => {
+    expect(parseSortMode(undefined)).toBe("updated");
   });
 });
