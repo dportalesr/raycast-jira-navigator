@@ -6,8 +6,6 @@
 
 ![Issues grouped by actionable status](metadata/jira-navigator-1.png)
 
-![Manage Scopes](metadata/jira-navigator-2.png)
-
 ## Commands
 
 | Command    | What it does                                                                 |
@@ -19,23 +17,23 @@
 
 One list, grouped by what each ticket needs from you, most urgent first:
 
-- **BLOCKED** - flagged / impediment tickets, whatever their status.
-- **REVIEW** - status `Review`.
-- **READY FOR DEPLOYMENT** - status `Ready for Deployment`.
-- **IN PROGRESS** - any other `In Progress` category status.
-- **TO DO** - `To Do` category.
-- **RECENTLY DONE** - completed within the last N days (configurable).
+- `Blocked`: flagged, whatever the status.
+- `Review` and `Ready for Deployment`: those exact statuses.
+- `In Progress` and `To Do`: everything else in each status category.
+- `Recently Done`: completed within the last N days, configurable.
 
 The named sections come before the category catch-alls, so a new or unknown
-in-progress status still surfaces. Empty sections are hidden. The list opens as
-a flat **Last Updated** sort; `⌘S` cycles on to the sectioned grouping, then
-Creation Date and Priority, and the mode you leave it on is remembered for the
+in-progress status still surfaces. Empty sections are hidden. The list opens as a
+flat **Last Updated** sort; `⌘S` cycles on to the sectioned grouping, then
+**Creation Date** and **Priority**, and the mode you leave it on is remembered for the
 next launch. Within the sectioned grouping, tickets read oldest-created first,
 so the longest-waiting ones surface at the top. The date accessory shows the
-date the active view sorts by: creation date in the sectioned grouping and
-Creation Date views, last update elsewhere. The flat sorts keep each ticket
+date the active view sorts by: **creation date** in the sectioned grouping and
+Creation Date views, **last update** elsewhere. The flat sorts keep each ticket
 tinted with its section color; typing filters by key, number, summary, status,
 or type.
+
+![Last Updated sort, tickets tinted by section](metadata/jira-navigator-2.png)
 
 ### Scopes
 
@@ -46,12 +44,16 @@ yours, shared, any name - and ⏎ toggles which appear in the scope dropdown.
 The selection is stored locally, so each teammate on a shared account curates
 their own; reopening Manage Scopes syncs renames and deletions made in Jira.
 
+![Scope dropdown](metadata/jira-navigator-3.png)
+
 Jira's built-in filters ("My open issues", "Reported by me", …) are not saved
 filters and cannot be referenced by the API; use "Save as" in Jira once, then
-select the copy. RECENTLY DONE is windowed client-side, so long-done tickets
+select the copy. `Recently Done` is windowed client-side, so long-done tickets
 fetched by a filter (say, requirements you reported) stay reachable in the
 flat sorts. With nothing selected, a fallback scope shows your last 48 hours
 of assigned activity, newest first.
+
+![Manage Scopes](metadata/jira-navigator-4.png)
 
 ### Activity
 
@@ -67,15 +69,21 @@ shows immediately but is held for a few seconds (configurable), during which
 Jira screen or required field are omitted - open those in the browser. This is
 the extension's only write action.
 
+![Change Status submenu](metadata/jira-navigator-5.png)
+
+![Status change held with Undo](metadata/jira-navigator-6.png)
+
 ### Copy actions
 
 | Shortcut | Copies                          |
 | -------- | ------------------------------- |
-| ⌥+C      | Issue key (`PROD-123`)          |
+| ⌥+C      | Issue key (`NOVA-000`)          |
 | ⌘+C      | URL                             |
 | ⌘+⌥+C    | Key and summary                 |
 | ⌘+⇧+C    | Markdown link                   |
 | ⌘+⇧+⌥+C  | Markdown link with summary      |
+
+![Action panel with copy shortcuts](metadata/jira-navigator-7.png)
 
 ### Hiding
 
@@ -101,9 +109,9 @@ case-insensitive) → `category` (To Do / In Progress / Done). Colors: `red`,
 
 ## Open Issue
 
-Give it a key (`PROD-1234`) as an argument, or leave it empty to read the
+Give it a key (`NOVA-1234`) as an argument, or leave it empty to read the
 clipboard, and the ticket opens in the browser. A bare number uses the
-**Fallback Project Key** preference (`1234` opens `PROD-1234`); any other text
+**Fallback Project Key** preference (`1234` opens `NOVA-1234`); any other text
 opens Issues pre-filtered by that term. Supports tab reuse: an already-open
 tab for the ticket is focused instead of spawning a new one.
 
@@ -113,7 +121,7 @@ tab for the ticket is focused instead of spawning a new one.
 - **Account Email** - Atlassian account email for the API token.
 - **API Token** - Atlassian API token.
 - **Fallback Project Key** - project assumed when Open Issue gets a bare number.
-- **Recently Done Threshold (days)** - RECENTLY DONE window (default 3, 0 hides Done).
+- **Recently Done Threshold (days)** - `Recently Done` window (default 3, 0 hides Done).
 - **Status Change Delay (seconds)** - Undo window before a status change reaches Jira.
 - **Section Config** - JSON array overriding the default sections.
 - **Browser / Tab Reuse / Browser App Override** - which browser opens tickets; Chromium browsers and Safari can focus an already-open tab.
