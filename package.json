@@ -170,5 +170,18 @@
     "lint": "ray lint",
     "fix-lint": "ray lint --fix",
     "test": "jest"
-  }
+  },
+  "keywords": [
+    "jira",
+    "atlassian",
+    "issues",
+    "tickets",
+    "triage",
+    "sprint"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dportalesr/raycast-jira-navigator.git"
+  },
+  "homepage": "https://github.com/dportalesr/raycast-jira-navigator"
 }

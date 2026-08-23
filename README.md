@@ -132,8 +132,8 @@ tab for the ticket is focused instead of spawning a new one.
 This extension is installed from source:
 
 ```sh
-git clone https://github.com/dportalesr/jira-navigator.git
-cd jira-navigator
+git clone https://github.com/dportalesr/raycast-jira-navigator.git
+cd raycast-jira-navigator
 npm install
 npm run dev
 ```
