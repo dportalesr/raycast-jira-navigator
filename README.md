@@ -11,7 +11,7 @@
 | Command    | What it does                                                                 |
 | ---------- | ---------------------------------------------------------------------------- |
 | Issues     | Your tickets grouped by actionable status, scoped by your saved Jira filters |
-| Open Issue | Jump to any ticket by key from the argument or clipboard                     |
+| Open Issue | Jump to any ticket by key from the argument, selection or clipboard          |
 
 ## Issues
 
@@ -110,7 +110,9 @@ case-insensitive) → `category` (To Do / In Progress / Done). Colors: `red`,
 ## Open Issue
 
 Give it a key (`NOVA-1234`) as an argument, or leave it empty to read the
-clipboard, and the ticket opens in the browser. A bare number uses the
+text selected in the frontmost app, or the clipboard when nothing is selected,
+and the ticket opens in the browser. Selecting a key avoids overwriting
+whatever you keep in the clipboard. A bare number uses the
 **Fallback Project Key** preference (`1234` opens `NOVA-1234`); any other text
 opens Issues pre-filtered by that term. Supports tab reuse: an already-open
 tab for the ticket is focused instead of spawning a new one.
@@ -121,6 +123,7 @@ tab for the ticket is focused instead of spawning a new one.
 - **Account Email** - Atlassian account email for the API token.
 - **API Token** - Atlassian API token.
 - **Fallback Project Key** - project assumed when Open Issue gets a bare number.
+- **Read Selected Text** - Open Issue reads the selection before the clipboard (default on).
 - **Recently Done Threshold (days)** - `Recently Done` window (default 3, 0 hides Done).
 - **Status Change Delay (seconds)** - Undo window before a status change reaches Jira.
 - **Section Config** - JSON array overriding the default sections.

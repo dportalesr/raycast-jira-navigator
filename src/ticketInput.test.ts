@@ -1,4 +1,4 @@
-import { resolveClipboardInput } from "./ticketInput";
+import { firstNonBlank, resolveClipboardInput } from "./ticketInput";
 
 describe("resolveClipboardInput", () => {
   it("opens a full issue key", () => {
@@ -85,5 +85,30 @@ describe("resolveClipboardInput with a fallback project key", () => {
 
   it("leaves empty input empty", () => {
     expect(resolveClipboardInput("", "PROD-")).toEqual({ kind: "empty" });
+  });
+});
+
+describe("firstNonBlank", () => {
+  it("prefers the earliest source that has text", async () => {
+    expect(await firstNonBlank([() => undefined, () => "PROD-1", () => "PROD-2"])).toBe("PROD-1");
+  });
+
+  it("skips a whitespace-only source so a blank selection falls back to the clipboard", async () => {
+    expect(await firstNonBlank([() => "", async () => "  \n ", async () => "PROD-2"])).toBe("PROD-2");
+  });
+
+  it("treats a failing source as blank", async () => {
+    const noSelection = () => Promise.reject(new Error("Unable to get selected text"));
+    expect(await firstNonBlank([noSelection, async () => "PROD-2"])).toBe("PROD-2");
+  });
+
+  it("does not read later sources once one has text", async () => {
+    const clipboard = jest.fn(async () => "PROD-2");
+    await firstNonBlank([async () => "PROD-1", clipboard]);
+    expect(clipboard).not.toHaveBeenCalled();
+  });
+
+  it("returns an empty string when every source is blank", async () => {
+    expect(await firstNonBlank([() => undefined, async () => " "])).toBe("");
   });
 });

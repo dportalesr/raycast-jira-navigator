@@ -21,7 +21,7 @@
       "name": "openIssueByKey",
       "title": "Open Issue",
       "subtitle": "Jira",
-      "description": "Open a Jira issue by its key from the clipboard or argument; other text filters My Issues",
+      "description": "Open a Jira issue by its key from the argument, selected text or clipboard; other text filters My Issues",
       "mode": "no-view",
       "arguments": [
         {
@@ -61,8 +61,17 @@
       "type": "textfield",
       "required": false,
       "title": "Fallback Project Key",
-      "description": "Project key used by Open Issue when the clipboard or argument holds a number without a project prefix (e.g. 1234 opens PROD-1234). Leave empty to treat bare numbers as a search.",
+      "description": "Project key used by Open Issue when its input holds a number without a project prefix (e.g. 1234 opens PROD-1234). Leave empty to treat bare numbers as a search.",
       "placeholder": "(Optional) e.g. PROD"
+    },
+    {
+      "name": "readSelectedText",
+      "type": "checkbox",
+      "required": false,
+      "title": "Read Selected Text",
+      "label": "Open Issue reads selected text before the clipboard",
+      "description": "When on, Open Issue uses the text selected in the frontmost app and only falls back to the clipboard when nothing is selected.",
+      "default": true
     },
     {
       "name": "recentlyDoneDays",

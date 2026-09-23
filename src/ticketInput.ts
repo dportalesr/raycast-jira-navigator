@@ -7,7 +7,7 @@ const NUMBER_RE = /\d+/;
 /** Matches a project key, with or without the trailing hyphen (e.g. `PROD` or `PROD-`). */
 const PROJECT_KEY_RE = /^([A-Z][A-Z0-9]+)-?$/i;
 
-/** What the clipboard/argument resolves to for the "Open Issue" command. */
+/** What the argument, selected text or clipboard resolves to for the "Open Issue" command. */
 export type ClipboardResolution = { kind: "open"; key: string } | { kind: "search"; term: string } | { kind: "empty" };
 
 /**
@@ -21,13 +21,36 @@ export function normalizeProjectPrefix(raw: string | undefined): string | undefi
   return match ? `${match[1].toUpperCase()}-` : undefined;
 }
 
+/** Lazily reads one input source (argument, selected text, clipboard). */
+export type InputSource = () => Promise<string | undefined> | string | undefined;
+
 /**
- * Resolve raw clipboard/argument text to an action: open a matched issue key,
+ * Read sources in precedence order and return the first non-blank text, trimmed.
+ * Later sources are only read when earlier ones come back blank; a source that
+ * fails (e.g. `getSelectedText` with nothing selected) counts as blank.
+ *
+ * @param sources Readers ordered from highest to lowest precedence.
+ * @returns The winning text, or an empty string when every source is blank.
+ */
+export async function firstNonBlank(sources: InputSource[]): Promise<string> {
+  for (const read of sources) {
+    try {
+      const text = (await read())?.trim();
+      if (text) return text;
+    } catch {
+      continue;
+    }
+  }
+  return "";
+}
+
+/**
+ * Resolve raw input text to an action: open a matched issue key,
  * otherwise open a bare number qualified with the fallback project key, and
  * otherwise hand the text to the dashboard as a search term. Empty input is
  * reported so the caller can show a distinct notice.
  *
- * @param raw Clipboard contents or the command argument.
+ * @param raw The command argument, selected text or clipboard contents.
  * @param fallbackProjectKey Project key used to qualify a number that carries no prefix.
  */
 export function resolveClipboardInput(raw: string, fallbackProjectKey?: string): ClipboardResolution {
